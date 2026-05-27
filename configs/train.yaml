@@ -20,7 +20,11 @@ defaults:
   warmup_ratio: 0.03
 
   # Batching — tune `per_device_train_batch_size` to fit your GPU.
-  # On A100 80GB w/ SmolLM2-360M at seq 384 we comfortably fit bs=32.
+  # SmolLM2-360M @ seq=384 memory budget:
+  #   A100 80GB: bs=32, grad_accum=1   (default)
+  #   A100 40GB: bs=24, grad_accum=1
+  #   A10  24GB: bs=16, grad_accum=2   (effective bs=32, ~2-3x slower wall-clock)
+  #   T4   16GB: bs=8,  grad_accum=4   (effective bs=32, considerably slower)
   per_device_train_batch_size: 32
   per_device_eval_batch_size: 32
   gradient_accumulation_steps: 1       # → effective batch 32 per device

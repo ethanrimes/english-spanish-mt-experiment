@@ -137,7 +137,8 @@ def run_tier(
         run_name=run_name,
         overwrite_output_dir=False,
         seed=seed,
-        max_seq_length=max_seq_len if hasattr(TrainingArguments, "max_seq_length") else None,
+        # max_seq_len is enforced in make_training_example; TrainingArguments
+        # has no such field — truncation is a dataset-level concern.
         num_train_epochs=args_dict["num_train_epochs"],
         per_device_train_batch_size=args_dict["per_device_train_batch_size"],
         per_device_eval_batch_size=args_dict["per_device_eval_batch_size"],

@@ -3,14 +3,24 @@
 # infrastructure *shape* so it can be reviewed/committed safely.
 
 compute:
-  # Recommended single-GPU instance for SmolLM2-360M full FT:
-  vm_size: Standard_NC24ads_A100_v4   # 1x A100 80GB, 24 vCPU, 220GB RAM
-  # For multi-GPU scale-out (overkill for 360M, but option exists):
-  # vm_size: Standard_NC48ads_A100_v4 # 2x A100 80GB
-  # vm_size: Standard_ND96amsr_A100_v4 # 8x A100 80GB
+  # SmolLM2-360M full FT fits comfortably on a single A10 24GB — much
+  # cheaper than A100 (~$1.20/hr vs ~$3.67/hr) and ~2-3x slower per step.
+  # Sensible default for tiers T10k–T1M. T5M is faster on A100.
+  vm_size: Standard_NV36ads_A10_v5    # 1x A10 24GB, 36 vCPU, 440GB RAM
+  # Alternatives:
+  # vm_size: Standard_NC24ads_A100_v4   # 1x A100 80GB (~3x faster, ~3x cost)
+  # vm_size: Standard_NV72ads_A10_v5    # 2x A10 48GB total
+  # vm_size: Standard_NC48ads_A100_v4   # 2x A100 80GB (multi-GPU; overkill for 360M)
+  # NB: NV6/NV12/NV18 ads_A10_v5 are GPU-partition SKUs (4/8/12GB) — too
+  # small for this model+batch combo; do NOT use.
   instance_count: 1
   process_count_per_instance: 1
   idle_time_before_scale_down: 1800   # seconds
+  # Per-device batch size to set in train.yaml depending on VRAM:
+  #   A100 80GB → 32   (default in train.yaml)
+  #   A100 40GB → 24
+  #   A10  24GB → 16   (use gradient_accumulation_steps=2 to keep effective bs)
+  #   T4   16GB → 8    (and grad_accum=4)
 
 environment:
   # Curated PyTorch image as the base; pip-install our pyproject on top.

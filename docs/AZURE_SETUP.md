@@ -7,7 +7,7 @@ One-time setup before running training jobs on Azure ML. The repo's code is para
 | Resource | Purpose | SKU / spec |
 | --- | --- | --- |
 | Azure ML workspace | Job tracking, environment registry, MLflow | any tier; same region as compute |
-| Azure ML compute cluster | GPU training | `Standard_NC24ads_A100_v4` (1× A100 80GB) |
+| Azure ML compute cluster | GPU training | `Standard_NV36ads_A10_v5` (1× A10 24GB, **recommended default**) or `Standard_NC24ads_A100_v4` (1× A100 80GB, ~3× faster, ~3× cost) |
 | Storage account + container | Data assets, checkpoints | Standard, with HNS for blob speed |
 | Azure Key Vault (auto-created with AML) | Secrets (W&B, HF tokens) | included |
 | Application Insights (auto-created with AML) | Logging | included |
@@ -27,7 +27,16 @@ $WS = "aml-en-es-mt"
 az group create -n $RG -l $LOC
 az ml workspace create --name $WS --resource-group $RG --location $LOC
 
-# 3. GPU compute cluster (scales to zero when idle)
+# 3a. GPU compute cluster — cheap option (A10 24GB, recommended default)
+az ml compute create `
+    --name gpu-a10-1x `
+    --type AmlCompute `
+    --size Standard_NV36ads_A10_v5 `
+    --min-instances 0 --max-instances 1 `
+    --idle-time-before-scale-down 1800 `
+    --workspace-name $WS --resource-group $RG
+
+# 3b. (Optional) faster option for T5M / debugging
 az ml compute create `
     --name gpu-a100-1x `
     --type AmlCompute `
@@ -84,20 +93,20 @@ Each submission prints a Studio URL where you can watch real-time logs / MLflow 
 az ml job download --name <job_name> --download-path ./runs/T<tier>-<job_name> --workspace-name $WS --resource-group $RG
 ```
 
-## Cost estimate (Pay-as-you-go, East US)
+## Cost estimate (Pay-as-you-go, East US, list prices)
 
-NC24ads_A100_v4 ≈ $3.67/hour list price (varies by region/agreement). Forecast from `00_estimate_runtime.py`:
+A10 ~$1.20/hr (NV36ads_A10_v5) is the recommended default; A100 ~$3.67/hr (NC24ads_A100_v4) for ~3× speed.
 
-| Tier  | Estimated run time | Cost @ list   |
-| ----- | ------------------ | ------------- |
-| T10k  | ~30 min            | ~$2           |
-| T50k  | ~1.5 hr            | ~$6           |
-| T100k | ~2.5 hr            | ~$9           |
-| T500k | ~6 hr              | ~$22          |
-| T1M   | ~10–12 hr          | ~$40          |
-| T5M   | ~40–55 hr          | ~$180         |
+| Tier  | A10 time | A10 cost | A100 time | A100 cost |
+| ----- | -------- | -------- | --------- | --------- |
+| T10k  | ~75 min  | ~$1.50   | ~30 min   | ~$2       |
+| T50k  | ~3.5 hr  | ~$4      | ~1.5 hr   | ~$6       |
+| T100k | ~6 hr    | ~$7      | ~2.5 hr   | ~$9       |
+| T500k | ~15 hr   | ~$18     | ~6 hr     | ~$22      |
+| T1M   | ~25–30 hr| ~$30–36  | ~10–12 hr | ~$40      |
+| T5M   | ~100–130 hr | ~$120–155 | ~40–55 hr | ~$180  |
 
-(Refresh after T10k completes — `00_estimate_runtime.py` will produce a measured projection.)
+Recommended strategy: run T10k → T1M on A10 (cheaper, total ~$60 across all five tiers), then decide whether T5M is worth a burst on A100 (~$180) or A10 (~$130–155). Refresh these numbers after T10k completes — `00_estimate_runtime.py` produces a measured projection from the actual throughput you observed.
 
 ## Cleanup
 
