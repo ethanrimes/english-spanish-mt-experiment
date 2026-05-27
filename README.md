@@ -79,7 +79,7 @@ uv run python azure/submit_job.py --tier 100000
 uv run python azure/submit_job.py --tier 500000
 ```
 
-See [`docs/AZURE_SETUP.md`](docs/AZURE_SETUP.md) for one-time Azure resource setup.
+First time? Walk through [`docs/AZURE_PROVISIONING.md`](docs/AZURE_PROVISIONING.md) — single page, ~15 minutes, ends with a one-shot `setup_azure.ps1` and a validator. For ongoing reference: [`docs/AZURE_SETUP.md`](docs/AZURE_SETUP.md).
 
 ## Observability
 

@@ -1,0 +1,62 @@
+{
+  "tatoeba": {
+    "in": 222024,
+    "out": 221957,
+    "drop_too_short": 0,
+    "drop_too_long": 28,
+    "drop_length_ratio": 18,
+    "drop_identical": 5,
+    "drop_langid": 0,
+    "drop_dup": 16
+  },
+  "ted2020": {
+    "in": 405954,
+    "out": 404238,
+    "drop_too_short": 7,
+    "drop_too_long": 585,
+    "drop_length_ratio": 899,
+    "drop_identical": 186,
+    "drop_langid": 0,
+    "drop_dup": 39
+  },
+  "news_commentary": {
+    "in": 47618,
+    "out": 46879,
+    "drop_too_short": 9,
+    "drop_too_long": 97,
+    "drop_length_ratio": 574,
+    "drop_identical": 59,
+    "drop_langid": 0,
+    "drop_dup": 0
+  },
+  "europarl": {
+    "in": 1962064,
+    "out": 1942304,
+    "drop_too_short": 167,
+    "drop_too_long": 17128,
+    "drop_length_ratio": 1582,
+    "drop_identical": 475,
+    "drop_langid": 0,
+    "drop_dup": 408
+  },
+  "opensubtitles": {
+    "in": 500000,
+    "out": 490724,
+    "drop_too_short": 314,
+    "drop_too_long": 0,
+    "drop_length_ratio": 6332,
+    "drop_identical": 2402,
+    "drop_langid": 0,
+    "drop_dup": 228
+  },
+  "paracrawl": {
+    "in": 500000,
+    "out": 498242,
+    "drop_too_short": 2,
+    "drop_too_long": 1756,
+    "drop_length_ratio": 0,
+    "drop_identical": 0,
+    "drop_langid": 0,
+    "drop_dup": 0
+  }
+}

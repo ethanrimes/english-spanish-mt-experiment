@@ -42,7 +42,9 @@ dependencies = [
     # Azure
     "azure-ai-ml>=1.20",
     "azure-identity>=1.18",
+    "azure-mgmt-resource>=23.0",
     "azure-storage-blob>=12.22",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
