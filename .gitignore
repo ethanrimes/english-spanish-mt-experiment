@@ -1,0 +1,85 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+.python-version-local
+
+# --- uv ---
+# Keep uv.lock tracked (deterministic deps); ignore caches
+.uv-cache/
+
+# --- IDE / editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- Project data (large, regeneratable) ---
+# Use file-level globs so we can selectively re-include manifests/.gitkeep below.
+data/raw/**
+data/interim/**
+data/processed/**
+data/cache/**
+data/hf_cache/**
+# Keep tracked: small JSON manifests describing each tier + the eval set placeholder
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/processed/manifests/
+!data/processed/manifests/**
+!data/eval/.gitkeep
+
+# --- Model artifacts ---
+checkpoints/
+runs/
+mlruns/
+wandb/
+outputs/
+hf_models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+# Exception: tiny test fixtures
+!tests/fixtures/**/*.safetensors
+
+# --- Logs ---
+logs/
+*.log
+*.log.*
+
+# --- Secrets / Azure ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+azure-credentials.json
+service-principal.json
+.azure/
+
+# --- OS / temp ---
+*.tmp
+*.bak
+*.orig
+~$*
+
+# --- Scratch ---
+scratch.md
+scratch/
+*_scratch.*
