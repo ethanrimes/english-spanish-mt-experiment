@@ -12,20 +12,24 @@ How much Spanish can an "English-only" small LM (~360M parameters) learn purely 
 
 Chosen because its training corpus (FineWeb-Edu + SmolLM-Corpus) was aggressively English-filtered with a classifier, giving the lowest realistic Spanish exposure among well-known small base models. We make no claim of *zero* Spanish — no public LLM trained on web data is truly monolingual — but it is the closest practical choice. See [`docs/MODEL_CHOICE.md`](docs/MODEL_CHOICE.md) for the full rationale and a tokenizer-level probe of Spanish handling.
 
-## Experimental design: four runs, multi-checkpoint each
+## Experimental design: six runs, multi-checkpoint each
 
-We train **four independent models** — one per data tier. Each training **run** produces many **checkpoint snapshots** through its lifetime (every N optimizer steps + a "best so far" by FLORES-dev BLEU). The snapshot trail is the rollback path if a run starts catastrophically forgetting English or regresses on Spanish.
+We train **six independent models** — one per data tier. Each training **run** produces many **checkpoint snapshots** through its lifetime (every N optimizer steps + a "best so far" by FLORES-dev BLEU). The snapshot trail is the rollback path if a run starts catastrophically forgetting English or regresses on Spanish.
 
-| Run name | Training pairs | Snapshots kept                                 |
-| -------- | -------------- | ---------------------------------------------- |
-| T10k     | 10,000         | every N steps + best-by-eval + final           |
-| T50k     | 50,000         | every N steps + best-by-eval + final           |
-| T100k    | 100,000        | every N steps + best-by-eval + final           |
-| T500k    | 500,000        | every N steps + best-by-eval + final           |
+| Run name | Training pairs | Notes                                              |
+| -------- | -------------- | -------------------------------------------------- |
+| T10k     | 10,000         | Sample-efficiency floor; clean sources only        |
+| T50k     | 50,000         | Mid-low; still mostly clean sources                |
+| T100k    | 100,000        | Mid; lightly includes OpenSubtitles                |
+| T500k    | 500,000        | Target operating point; ParaCrawl introduced       |
+| T1M      | 1,000,000      | Scale check; ParaCrawl + OpenSubtitles heavy       |
+| T5M      | 5,000,000      | Ceiling run; full diverse web-mined coverage       |
 
-Each tier's training set is a stratified random subsample drawn from the same cleaned union pool, balanced across source corpus and sentence length. Held-out evaluation uses **FLORES-200** devtest (identical across runs so comparisons are apples-to-apples).
+Every run keeps a rolling window of `save_total_limit` checkpoints plus the best-by-eval-BLEU snapshot and the final-step snapshot. Each tier's training set is a stratified random subsample drawn from the same cleaned union pool, balanced across source corpus and sentence length. Tiers are **strictly nested** (T10k ⊂ T50k ⊂ ... ⊂ T5M) so the smaller-tier examples are guaranteed inside the larger ones — makes quality-vs-data comparisons fair.
 
-Source corpora (English↔Spanish): Tatoeba, TED2020, News-Commentary, Europarl (sampled). See [`docs/DATA.md`](docs/DATA.md).
+Held-out evaluation uses **FLORES-200** devtest (identical across all runs).
+
+Source corpora (English↔Spanish): Tatoeba, TED2020, News-Commentary, Europarl, OpenSubtitles (sampled), ParaCrawl (sampled). See [`docs/DATA.md`](docs/DATA.md).
 
 ## Layout
 

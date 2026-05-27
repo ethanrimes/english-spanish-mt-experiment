@@ -1,0 +1,136 @@
+# Training configuration.
+# Per-tier overrides are at the bottom — they tune steps/eval cadence to
+# data size so all four runs finish in roughly comparable wall time.
+
+# Defaults applied to every tier unless overridden.
+defaults:
+  output_dir: checkpoints              # actual dir becomes checkpoints/T{tier}/
+  seed: 20260526
+  max_seq_len: 384
+
+  # Optimization
+  optimizer: adamw_torch
+  learning_rate: 2.0e-5
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+
+  # Batching — tune `per_device_train_batch_size` to fit your GPU.
+  # On A100 80GB w/ SmolLM2-360M at seq 384 we comfortably fit bs=32.
+  per_device_train_batch_size: 32
+  per_device_eval_batch_size: 32
+  gradient_accumulation_steps: 1       # → effective batch 32 per device
+  num_train_epochs: 3                  # overridden per tier below
+
+  # Precision
+  bf16: true
+  fp16: false
+  tf32: true
+  gradient_checkpointing: true
+
+  # Checkpoint snapshots: this is the rollback path.
+  save_strategy: steps
+  save_steps: 500                      # snapshot every 500 optimizer steps
+  save_total_limit: 6                  # keep last 6 + best (overridden per tier)
+  load_best_model_at_end: true
+  metric_for_best_model: eval_avg_bleu # mean of en→es and es→en BLEU
+  greater_is_better: true
+
+  # Eval cadence — must align with save_steps for `load_best_model_at_end`.
+  eval_strategy: steps
+  eval_steps: 500
+  eval_on_start: true                  # baseline (pre-train) numbers logged
+  predict_with_generate: false         # we run our own gen eval (see eval block)
+
+  # Generation eval on FLORES dev — runs alongside loss-only HF eval.
+  generation_eval:
+    enabled: true
+    every_n_steps: 500
+    set: flores200_dev
+    num_samples: 200                   # quick eval during training
+    final_set: flores200_devtest       # 1012 sentences, full eval at end
+    max_new_tokens: 192
+    num_beams: 4
+    length_penalty: 1.0
+    no_repeat_ngram_size: 0
+    do_sample: false
+    log_sample_translations: 20        # log this many side-by-side examples to W&B
+
+  # Catastrophic-forgetting probe: English-only LM perplexity on a fixed set.
+  # Held out of all training data.
+  forgetting_probe:
+    enabled: true
+    set_path: data/eval/english_holdout.jsonl   # generated at prepare time
+    every_n_steps: 500
+    num_samples: 500
+
+  # Logging
+  logging_steps: 25
+  report_to: [wandb, mlflow, tensorboard]
+  log_level: info
+  disable_tqdm: false
+
+# Per-tier overrides. We hold the eval pipeline constant; only the budget
+# changes so smaller tiers don't accidentally see the eval set more often.
+tiers:
+  10000:
+    num_train_epochs: 8        # small data → more epochs
+    save_steps: 100
+    eval_steps: 100
+    generation_eval: { every_n_steps: 100 }
+    forgetting_probe: { every_n_steps: 100 }
+    save_total_limit: 10
+
+  50000:
+    num_train_epochs: 5
+    save_steps: 250
+    eval_steps: 250
+    generation_eval: { every_n_steps: 250 }
+    forgetting_probe: { every_n_steps: 250 }
+    save_total_limit: 8
+
+  100000:
+    num_train_epochs: 4
+    save_steps: 500
+    eval_steps: 500
+    generation_eval: { every_n_steps: 500 }
+    forgetting_probe: { every_n_steps: 500 }
+    save_total_limit: 8
+
+  500000:
+    num_train_epochs: 2        # big data → fewer epochs (more unique examples)
+    save_steps: 1000
+    eval_steps: 1000
+    generation_eval: { every_n_steps: 1000 }
+    forgetting_probe: { every_n_steps: 1000 }
+    save_total_limit: 8
+
+  1000000:
+    num_train_epochs: 2
+    save_steps: 2000
+    eval_steps: 2000
+    generation_eval: { every_n_steps: 2000 }
+    forgetting_probe: { every_n_steps: 2000 }
+    save_total_limit: 8
+
+  5000000:
+    num_train_epochs: 1        # massive data → single pass is plenty for FT
+    save_steps: 5000
+    eval_steps: 5000
+    generation_eval: { every_n_steps: 5000 }
+    forgetting_probe: { every_n_steps: 5000 }
+    save_total_limit: 10
+
+# Observability targets — keys read from env (.env / Azure secret).
+observability:
+  wandb:
+    project_env: WANDB_PROJECT
+    entity_env: WANDB_ENTITY
+    tags: [smollm2-360m, en-es, full-ft]
+  mlflow:
+    # Auto-attached in Azure ML; locally points at ./mlruns.
+    tracking_uri_env: MLFLOW_TRACKING_URI

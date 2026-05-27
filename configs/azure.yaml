@@ -1,0 +1,78 @@
+# Azure ML job/resource configuration.
+# Concrete subscription/RG/workspace come from .env; this file holds the
+# infrastructure *shape* so it can be reviewed/committed safely.
+
+compute:
+  # Recommended single-GPU instance for SmolLM2-360M full FT:
+  vm_size: Standard_NC24ads_A100_v4   # 1x A100 80GB, 24 vCPU, 220GB RAM
+  # For multi-GPU scale-out (overkill for 360M, but option exists):
+  # vm_size: Standard_NC48ads_A100_v4 # 2x A100 80GB
+  # vm_size: Standard_ND96amsr_A100_v4 # 8x A100 80GB
+  instance_count: 1
+  process_count_per_instance: 1
+  idle_time_before_scale_down: 1800   # seconds
+
+environment:
+  # Curated PyTorch image as the base; pip-install our pyproject on top.
+  base_image: mcr.microsoft.com/azureml/curated/acpt-pytorch-2.4-cuda12.4:latest
+  # Alternative: build from azure/environment.yml (conda) for full reproducibility.
+  conda_file: azure/environment.yml
+  name: en-es-mt-env
+  version: "1"
+
+# Data assets — registered once, referenced by jobs.
+data_assets:
+  parallel_corpus_raw:
+    name: en-es-parallel-raw
+    type: uri_folder
+    description: Raw OPUS dumps before cleaning.
+  parallel_corpus_processed:
+    name: en-es-parallel-processed
+    type: uri_folder
+    description: Cleaned + tiered parallel corpus (T10k/T50k/T100k/T500k).
+  eval_flores:
+    name: flores200-en-es
+    type: uri_folder
+    description: FLORES-200 dev + devtest for en-es.
+
+# Job templates.
+jobs:
+  train:
+    code: .
+    command: >
+      python scripts/04_train.py
+      --config configs/train.yaml
+      --model-config configs/model.yaml
+      --data-tier ${{inputs.tier}}
+      --data-dir ${{inputs.data_dir}}
+      --output-dir ${{outputs.checkpoints}}
+    inputs:
+      tier: 10000                     # overridden per submission
+      data_dir:                       # filled by azure/submit_job.py
+    outputs:
+      checkpoints:                    # rolling + best snapshots
+    environment: en-es-mt-env@latest
+    compute: ${{AZURE_COMPUTE_NAME}}
+    display_name_template: "T{tier}-{timestamp}"
+    experiment_name: en-es-mt-scaling
+
+  evaluate:
+    code: .
+    command: >
+      python scripts/05_evaluate.py
+      --checkpoint ${{inputs.checkpoint}}
+      --eval-set flores200_devtest
+      --output ${{outputs.results}}/eval.json
+    environment: en-es-mt-env@latest
+    compute: ${{AZURE_COMPUTE_NAME}}
+    experiment_name: en-es-mt-eval
+
+# Storage layout under the workspace's default blob container.
+storage:
+  prefix: en-es-mt
+  paths:
+    raw:         "{prefix}/data/raw"
+    processed:   "{prefix}/data/processed"
+    eval:        "{prefix}/data/eval"
+    checkpoints: "{prefix}/checkpoints/T{tier}"
+    logs:        "{prefix}/logs/T{tier}"

@@ -1,0 +1,58 @@
+# Azure ML job template for a single training tier.
+# Submitted programmatically via azure/submit_job.py; this file is the
+# canonical version-controlled spec. Inputs / outputs filled by the submit
+# script at runtime so we don't bake secrets or per-run paths into yaml.
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+
+display_name: en-es-mt-train             # overridden per run: T{tier}-{sha}-{ts}
+experiment_name: en-es-mt-scaling
+
+# Code is the whole repo so the package import works.
+code: ..
+command: >-
+  pip install -e . &&
+  python scripts/04_train.py
+  --tiers ${{inputs.tier}}
+  --data-dir ${{inputs.processed_data}}
+  --output-root ${{outputs.checkpoints}}
+
+inputs:
+  tier:
+    type: integer
+    default: 10000
+  processed_data:
+    type: uri_folder
+    mode: ro_mount
+  # Optional: english_holdout / flores eval — both can live alongside processed.
+  # eval_data:
+  #   type: uri_folder
+  #   mode: ro_mount
+
+outputs:
+  checkpoints:
+    type: uri_folder
+    mode: rw_mount
+
+environment:
+  image: mcr.microsoft.com/azureml/curated/acpt-pytorch-2.4-cuda12.4:latest
+  conda_file: environment.yml
+
+# Compute is parameterized via .env / submit_job.py
+# compute: azureml:gpu-a100-1x
+
+services:
+  vs_code:
+    type: vs_code
+  jupyter_lab:
+    type: jupyter_lab
+  tensor_board:
+    type: tensor_board
+    properties:
+      logDir: outputs/tensorboard
+
+environment_variables:
+  WANDB_PROJECT: en-es-mt
+  HF_HOME: /tmp/hf_cache
+  MLFLOW_EXPERIMENT_NAME: en-es-mt-scaling
+  TRANSFORMERS_VERBOSITY: warning

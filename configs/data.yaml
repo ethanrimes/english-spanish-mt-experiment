@@ -1,0 +1,118 @@
+# Data pipeline configuration.
+# Used by: scripts/01_download_data.py, scripts/02_prepare_data.py
+
+# Source corpora. Each entry is consumed by src/en_es_mt/data/sources.py.
+# `loader` selects which adapter to use; `params` are loader-specific.
+sources:
+  - name: tatoeba
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-Tatoeba/v2023-04-12/tmx/en-es.tmx.gz
+    license: CC-BY-2.0
+    domain: general
+    # ~150k pairs after dedupe; clean, often short.
+
+  - name: ted2020
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-TED2020/v1/tmx/en-es.tmx.gz
+    license: CC-BY-NC-4.0
+    domain: talks
+    # ~410k pairs; conversational + lecture register.
+
+  - name: news_commentary
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-News-Commentary/v16/tmx/en-es.tmx.gz
+    license: CC-BY-NC-SA-4.0
+    domain: news
+    # ~430k pairs; formal journalistic register.
+
+  - name: europarl
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-Europarl/v8/tmx/en-es.tmx.gz
+    license: see-OPUS
+    domain: parliament
+    # ~2M pairs; sampled in the tier stage to avoid domain dominance.
+
+  - name: opensubtitles
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-OpenSubtitles/v2024/tmx/en-es.tmx.gz
+    license: see-OPUS
+    domain: subtitles
+    # ~50M pairs; conversational. Noisy. Heavily sampled.
+    # Use `max_pairs_local` to cap on the laptop; full pull on Azure.
+    max_pairs_local: 200000
+    max_pairs_azure: 5000000
+
+  - name: paracrawl
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-ParaCrawl/v9/tmx/en-es.tmx.gz
+    license: CC0
+    domain: web
+    # ~78M pairs; web-mined. Noisy but very diverse. Heavily sampled.
+    max_pairs_local: 200000
+    max_pairs_azure: 5000000
+
+  - name: ccmatrix
+    loader: opus_tmx_zip
+    url: https://object.pouta.csc.fi/OPUS-CCMatrix/v1/tmx/en-es.tmx.gz
+    license: see-OPUS
+    domain: web-mined
+    # ~470M pairs; multilingual aligned. Very noisy — kept disabled by default.
+    enabled: false
+    max_pairs_local: 0
+    max_pairs_azure: 2000000
+
+# Evaluation set — small, high-quality, multi-domain.
+# Loaded directly from HuggingFace at prepare time.
+eval:
+  - name: flores200_devtest
+    loader: hf_dataset
+    hf_id: facebook/flores
+    config: eng_Latn-spa_Latn
+    split: devtest
+    # 1012 sentences across multiple domains. Standard MT eval benchmark.
+  - name: flores200_dev
+    loader: hf_dataset
+    hf_id: facebook/flores
+    config: eng_Latn-spa_Latn
+    split: dev
+
+# Cleaning / filtering applied to every source before pooling.
+clean:
+  min_chars: 3
+  max_chars: 500
+  max_length_ratio: 3.0      # |len(en) - len(es)| ratio guard (broken alignment)
+  min_tokens: 1
+  max_tokens: 256            # in whitespace-tokens
+  langid_min_prob: 0.5       # fasttext langid threshold per side
+  drop_if_identical: true    # en == es lines (often noise)
+  normalize_whitespace: true
+  strip_html_tags: true
+
+# Tier definitions. Strictly nested (10k ⊂ 50k ⊂ ... ⊂ 5M) so smaller
+# runs are guaranteed a subset of larger ones — keeps comparison fair.
+tiers:
+  sizes: [10000, 50000, 100000, 500000, 1000000, 5000000]
+  val_fraction: 0.02         # held-out validation per tier (separate from FLORES eval)
+  seed: 20260526             # deterministic
+  # Stratification axes (jointly balanced, best-effort):
+  stratify_by_source: true
+  # Source weights: applied independently at each tier so the small clean
+  # corpora dominate the small tiers, and the noisier web corpora kick in
+  # only once we need volume. Each row must sum to ~1.0.
+  source_weights_per_tier:
+    10000:     { tatoeba: 0.40, ted2020: 0.30, news_commentary: 0.20, europarl: 0.10 }
+    50000:     { tatoeba: 0.25, ted2020: 0.30, news_commentary: 0.20, europarl: 0.25 }
+    100000:    { tatoeba: 0.15, ted2020: 0.30, news_commentary: 0.20, europarl: 0.30, opensubtitles: 0.05 }
+    500000:    { tatoeba: 0.05, ted2020: 0.20, news_commentary: 0.15, europarl: 0.30, opensubtitles: 0.15, paracrawl: 0.15 }
+    1000000:   { tatoeba: 0.02, ted2020: 0.10, news_commentary: 0.10, europarl: 0.25, opensubtitles: 0.25, paracrawl: 0.28 }
+    5000000:   { tatoeba: 0.005, ted2020: 0.04, news_commentary: 0.05, europarl: 0.10, opensubtitles: 0.40, paracrawl: 0.40, ccmatrix: 0.005 }
+  # Length-bucket axis (en char count) — sampled uniformly across these buckets.
+  length_buckets: [0, 40, 80, 160, 320, 500]
+
+# Where data lives on disk (relative to repo root).
+paths:
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed
+  eval_dir: data/eval
+  manifest_dir: data/processed/manifests

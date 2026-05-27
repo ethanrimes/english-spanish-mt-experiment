@@ -1,0 +1,12 @@
+# Conda environment used by Azure ML jobs. Built on top of the curated
+# acpt-pytorch base image. Pip-only deps come from the project pyproject.
+name: en-es-mt-env
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - "."           # installs from pyproject.toml in the project root
+      - "torch>=2.4"  # ensures CUDA wheel from index in submit_job.py

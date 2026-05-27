@@ -1,0 +1,30 @@
+# Base model configuration.
+# See docs/MODEL_CHOICE.md for rationale.
+
+model:
+  hf_id: HuggingFaceTB/SmolLM2-360M
+  revision: main
+  trust_remote_code: false
+  dtype: bfloat16            # A100 supports bf16; falls back to fp16 elsewhere
+  attn_implementation: sdpa  # works on PyTorch >= 2.1
+  gradient_checkpointing: true
+  # We do NOT extend the tokenizer with Spanish-specific tokens.
+  # The whole point of the study is to see how well the original
+  # English-trained tokenizer handles Spanish via subword decomposition.
+  extend_tokenizer_for_spanish: false
+
+# Prompt template applied at training & inference time.
+# Both directions are trained in a single corpus by random direction sampling.
+prompt:
+  template: |
+    {src_lang}: {src_text}
+    {tgt_lang}: {tgt_text}
+  src_lang_names:
+    en: "English"
+    es: "Spanish"
+  # Direction sampling at training time:
+  direction_sampling: balanced   # 50/50 en→es and es→en per epoch
+  # Token masking: only compute loss on the target side (after the
+  # "<tgt_lang>:" marker) so the model learns to *generate* the translation
+  # rather than just memorize the prompt.
+  mask_loss_on_prompt: true
