@@ -83,3 +83,6 @@ service-principal.json
 scratch.md
 scratch/
 *_scratch.*
+
+# --- Claude Code internal ---
+.claude/
