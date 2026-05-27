@@ -10,7 +10,7 @@ End-to-end walkthrough: you provision the Azure resources from your account, pas
 
 | Tool | How to verify | Install link |
 | --- | --- | --- |
-| Azure subscription with quota for **NV A10 v5** family (or NC A100 v4) | Run `az vm list-usage -l eastus -o table` after step 2; check `aml` quota too | n/a — assume yes |
+| Azure subscription with quota for **NV A10 v5** family (or NC A100 v4) | Run `az vm list-usage -l westcentralus -o table` after step 2; check `aml` quota too | n/a — assume yes |
 | `az` CLI ≥ 2.60 | `az --version` | https://learn.microsoft.com/cli/azure/install-azure-cli |
 | `az ml` extension | `az extension show -n ml` (will install on first use) | auto |
 | PowerShell 7 | `pwsh --version` (you have it; the repo already uses it) | n/a |
@@ -27,7 +27,7 @@ You'll need names for four things. Pick now so the rest of the steps just substi
 | Variable | Meaning | Suggested |
 | --- | --- | --- |
 | `$RG` | Resource group | `rg-en-es-mt` |
-| `$LOC` | Azure region | `eastus` (cheap, has A10) |
+| `$LOC` | Azure region | `westcentralus` (where the user has A10 quota approved) |
 | `$WS` | Azure ML workspace | `aml-en-es-mt` |
 | `$STORAGE` | Storage account (must be **3–24 lowercase chars, globally unique**) | `enesmt<yourinitials><suffix>` e.g. `enesmtek09` |
 
