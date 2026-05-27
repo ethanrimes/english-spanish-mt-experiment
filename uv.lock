@@ -310,6 +310,20 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-mgmt-resource"
+version = "25.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-mgmt-core" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d7/7e/b3f9d544a94782be9c5ab8123d2fa7fb20cbdf3f5a16b883f308865e1406/azure_mgmt_resource-25.0.0.tar.gz", hash = "sha256:dc123a9f6509c37299d7716c9090cff0a9d73309b228cc094ea950ce3cca3603", size = 92837, upload-time = "2026-02-06T06:00:39.699Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/41/ce12546aa2a20c4f37d061bfa7df3bf8fa72ff01e7557ec330929c72ec7d/azure_mgmt_resource-25.0.0-py3-none-any.whl", hash = "sha256:f6f17b2305abe9bf6ec6c92a9410af21a2b0d805cc98e94d80c07220924a045b", size = 83670, upload-time = "2026-02-06T06:00:41.317Z" },
+]
+
+[[package]]
 name = "azure-monitor-opentelemetry"
 version = "1.8.8"
 source = { registry = "https://pypi.org/simple" }
@@ -918,6 +932,7 @@ dependencies = [
     { name = "accelerate" },
     { name = "azure-ai-ml" },
     { name = "azure-identity" },
+    { name = "azure-mgmt-resource" },
     { name = "azure-storage-blob" },
     { name = "datasets" },
     { name = "evaluate" },
@@ -928,6 +943,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "regex" },
     { name = "rich" },
@@ -964,6 +980,7 @@ requires-dist = [
     { name = "accelerate", specifier = ">=1.0" },
     { name = "azure-ai-ml", specifier = ">=1.20" },
     { name = "azure-identity", specifier = ">=1.18" },
+    { name = "azure-mgmt-resource", specifier = ">=23.0" },
     { name = "azure-storage-blob", specifier = ">=12.22" },
     { name = "datasets", specifier = ">=3.0" },
     { name = "evaluate", specifier = ">=0.4" },
@@ -978,6 +995,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "python-dotenv", specifier = ">=1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "regex", specifier = ">=2024.5" },
     { name = "rich", specifier = ">=13.7" },

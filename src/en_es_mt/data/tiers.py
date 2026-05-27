@@ -158,15 +158,19 @@ def _stratified_sample(
             buckets[_bucket(rec["en_len"], length_buckets)].append(rec)
         per_bucket_target = max(1, src_quota // max(1, len(buckets)))
         src_picked: list[dict] = []
+        src_picked_ids: set[str] = set()
         for _, recs in sorted(buckets.items()):
             if not recs:
                 continue
             k = min(per_bucket_target, len(recs))
             sample = rng.sample(recs, k)
             src_picked.extend(sample)
+            src_picked_ids.update(r["id"] for r in sample)
         # Fill any remaining quota with random source samples.
+        # NB: precompute the picked-id set ONCE — putting the set comprehension
+        # inside the list-comp filter rebuilds it on every iteration (O(N²)).
         if len(src_picked) < src_quota:
-            remaining = [r for r in candidates if r["id"] not in {x["id"] for x in src_picked}]
+            remaining = [r for r in candidates if r["id"] not in src_picked_ids]
             extra = min(src_quota - len(src_picked), len(remaining))
             if extra > 0:
                 src_picked.extend(rng.sample(remaining, extra))
@@ -178,12 +182,7 @@ def _stratified_sample(
 
     # If we under-shot the target (a source had less data than the quota),
     # top up from any source. allow_fallback governs whether this is used.
-    if len(picked) < target_n and allow_fallback:
-        all_recs = [r for recs in by_source.values() for r in recs if r["id"] not in seen_ids]
-        deficit = target_n - len(picked)
-        if all_recs:
-            picked.extend(rng.sample(all_recs, min(deficit, len(all_recs))))
-    elif len(picked) < target_n:
+    if len(picked) < target_n:
         all_recs = [r for recs in by_source.values() for r in recs if r["id"] not in seen_ids]
         deficit = target_n - len(picked)
         if all_recs:

@@ -1,0 +1,43 @@
+{
+  "tier": 100000,
+  "created_at_utc": "2026-05-27T01:23:26.853316+00:00",
+  "seed": 20260526,
+  "counts": {
+    "train": 98000,
+    "val": 2000,
+    "total": 100000
+  },
+  "source_distribution": {
+    "europarl": 30000,
+    "ted2020": 30000,
+    "tatoeba": 15000,
+    "news_commentary": 20000,
+    "opensubtitles": 5000
+  },
+  "length_bucket_distribution": {
+    "5": 10323,
+    "3": 24104,
+    "2": 22973,
+    "1": 22767,
+    "4": 19802,
+    "6": 31
+  },
+  "length_bucket_edges": [
+    0,
+    40,
+    80,
+    160,
+    320,
+    500
+  ],
+  "files": {
+    "train": {
+      "path": "data\\processed\\T100000\\train.jsonl",
+      "sha256": "62edc7718f49708994ebd38f9038cdb164419a7e206f35bf87e1ac3c1e304cff"
+    },
+    "val": {
+      "path": "data\\processed\\T100000\\val.jsonl",
+      "sha256": "c7408283c89c296d713a3045e8888e904c4936bfd60f9bd0642488633b15562d"
+    }
+  }
+}
