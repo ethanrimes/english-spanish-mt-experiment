@@ -56,6 +56,10 @@ cuda = [
 cpu = [
     "torch>=2.4",
 ]
+# vast.ai CLI — pulls the official `vastai` Python package
+vastai = [
+    "vastai>=0.2",
+]
 dev = [
     "pytest>=8.3",
     "pytest-cov>=5.0",

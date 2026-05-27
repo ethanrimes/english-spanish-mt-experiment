@@ -66,20 +66,35 @@ uv run python scripts/04_train.py --config configs/train.yaml --tier 10000
 uv run python scripts/05_evaluate.py --checkpoint checkpoints/T10k/best
 ```
 
-## Running on Azure ML
+## Running training in the cloud
+
+Two backends are supported. Pick whichever your account can use.
+
+### Option A — vast.ai (recommended: no quota, ~3× cheaper)
 
 ```powershell
-# Configure once
-copy .env.example .env   # fill in subscription, RG, workspace, etc.
+copy .env.example .env                  # fill in VAST_API_KEY, WANDB_API_KEY
 
-# Submit a job per tier
-uv run python azure/submit_job.py --tier 10000
-uv run python azure/submit_job.py --tier 50000
-uv run python azure/submit_job.py --tier 100000
-uv run python azure/submit_job.py --tier 500000
+uv sync --extra vastai --extra cpu      # CLI + project deps
+uv run python scripts/vastai_search.py  # browse current A10/A100 offers
+uv run python scripts/vastai_provision.py --offer-id <ID>
+uv run python scripts/vastai_sync.py --upload          # ship data/processed + data/eval
+uv run python scripts/vastai_run.py --bootstrap        # one-time: clone repo + uv sync on remote
+uv run python scripts/vastai_run.py --tiers 10000      # train
+uv run python scripts/vastai_sync.py --download checkpoints runs   # pull artifacts back
+uv run python scripts/vastai_destroy.py --stop         # critical: stop billing
 ```
 
-First time? Walk through [`docs/AZURE_PROVISIONING.md`](docs/AZURE_PROVISIONING.md) — single page, ~15 minutes, ends with a one-shot `setup_azure.ps1` and a validator. For ongoing reference: [`docs/AZURE_SETUP.md`](docs/AZURE_SETUP.md).
+Full walkthrough: [`docs/VASTAI_SETUP.md`](docs/VASTAI_SETUP.md).
+
+### Option B — Azure ML
+
+```powershell
+copy .env.example .env                  # fill in subscription, RG, workspace, etc.
+uv run python azure/submit_job.py --tier 10000
+```
+
+First time? [`docs/AZURE_PROVISIONING.md`](docs/AZURE_PROVISIONING.md) is a 15-min walkthrough that ends with a one-shot `setup_azure.ps1` and a validator. Azure ML requires GPU quota approval — file a manual support ticket if the automated request gets auto-denied (common for VS Enterprise subs).
 
 ## Observability
 
