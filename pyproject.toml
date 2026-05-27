@@ -3,7 +3,7 @@ name = "en-es-mt"
 version = "0.1.0"
 description = "Fine-tuning a predominantly-English small LM (SmolLM2-360M) for English<->Spanish translation, with controlled data-tier scaling experiments."
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 license = { text = "MIT" }
 authors = [{ name = "Ethan Kallett" }]
 

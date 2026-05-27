@@ -38,8 +38,9 @@ sources:
     license: see-OPUS
     domain: subtitles
     # ~50M pairs; conversational. Noisy. Heavily sampled.
-    # Use `max_pairs_local` to cap on the laptop; full pull on Azure.
-    max_pairs_local: 200000
+    # Local cap 500k → enough to support tier sampling up through T1M.
+    # Full pull (~10GB+) is reserved for the Azure VM and the T5M run.
+    max_pairs_local: 500000
     max_pairs_azure: 5000000
 
   - name: paracrawl
@@ -48,7 +49,8 @@ sources:
     license: CC0
     domain: web
     # ~78M pairs; web-mined. Noisy but very diverse. Heavily sampled.
-    max_pairs_local: 200000
+    # Local cap 500k → enough to support tier sampling up through T1M.
+    max_pairs_local: 500000
     max_pairs_azure: 5000000
 
   - name: ccmatrix
