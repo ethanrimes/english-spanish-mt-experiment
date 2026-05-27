@@ -64,19 +64,19 @@ sources:
     max_pairs_azure: 2000000
 
 # Evaluation set — small, high-quality, multi-domain.
-# Loaded directly from HuggingFace at prepare time.
+# Pulled directly from Meta's CDN (the HF dataset version is script-based
+# and incompatible with datasets>=3.0).
 eval:
   - name: flores200_devtest
-    loader: hf_dataset
-    hf_id: facebook/flores
-    config: eng_Latn-spa_Latn
+    loader: flores_tarball
+    url: https://dl.fbaipublicfiles.com/nllb/flores200_dataset.tar.gz
     split: devtest
     # 1012 sentences across multiple domains. Standard MT eval benchmark.
   - name: flores200_dev
-    loader: hf_dataset
-    hf_id: facebook/flores
-    config: eng_Latn-spa_Latn
+    loader: flores_tarball
+    url: https://dl.fbaipublicfiles.com/nllb/flores200_dataset.tar.gz
     split: dev
+    # 997 sentences; used for training-time generation eval.
 
 # Cleaning / filtering applied to every source before pooling.
 clean:

@@ -254,5 +254,5 @@ def _write_tier(
     }
     manifest_path = manifest_dir / f"T{size}.json"
     write_json(manifest_path, manifest)
-    log.info("tier T%d: %d train + %d val → %s", size, len(train_records), len(val_records), manifest_path)
+    log.info("tier T%d: %d train + %d val -> %s", size, len(train_records), len(val_records), manifest_path)
     return manifest

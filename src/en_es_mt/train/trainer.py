@@ -280,7 +280,7 @@ def run_tier(
         extras={"train_output": train_output.metrics, "args": args_dict},
     )
     append_run(record)
-    log.info("registered run T%d → runs/registry.jsonl", tier)
+    log.info("registered run T%d -> runs/registry.jsonl", tier)
     return asdict(record)
 
 

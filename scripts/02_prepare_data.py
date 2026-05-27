@@ -7,10 +7,10 @@ Usage:
 
 Pipeline:
   raw/{source}.jsonl
-    → clean.py
-        → interim/{source}.jsonl   (filtered, deduped per-source, normalized)
-    → tiers.py
-        → processed/T{size}/{train,val}.jsonl  +  processed/manifests/T{size}.json
+    -> clean.py
+        -> interim/{source}.jsonl   (filtered, deduped per-source, normalized)
+    -> tiers.py
+        -> processed/T{size}/{train,val}.jsonl  +  processed/manifests/T{size}.json
 """
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def main() -> None:
         if not in_path.exists():
             print(f"# skipping {s.name}: {in_path} not present (run 01_download_data.py)")
             continue
-        print(f"# cleaning {s.name} → {out_path}")
+        print(f"# cleaning {s.name} -> {out_path}")
         stats = clean_source(in_path, out_path, rules=cfg.clean, langid=langid)
         all_stats[s.name] = stats
         cleaned_paths[s.name] = out_path
@@ -107,7 +107,7 @@ def _build_english_holdout(flores_dev: Path, out_path: Path) -> None:
         return
     records = ({"text": r["en"]} for r in read_jsonl(flores_dev))
     n = write_jsonl(out_path, records)
-    print(f"# wrote english_holdout.jsonl ({n} records) → {out_path}")
+    print(f"# wrote english_holdout.jsonl ({n} records) -> {out_path}")
 
 
 if __name__ == "__main__":
